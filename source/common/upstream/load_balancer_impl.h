@@ -111,6 +111,7 @@ protected:
   std::deque<uint64_t> stashed_random_;
   Random::RandomGenerator& random_;
   const uint32_t default_healthy_panic_percent_;
+  const uint32_t shard_size_;
   // The priority-ordered set of hosts to use for load balancing.
   const PrioritySet& priority_set_;
 
@@ -456,6 +457,11 @@ private:
     // host source as the key. This means that each LB decision will require two map lookups in
     // the unweighted case. We might consider trying to optimize this in the future.
     ASSERT(rr_indexes_.find(source) != rr_indexes_.end());
+    // reduce hosts_to_use to a small subset, then do below --v
+    // index = Random / shard_size_
+    // random(hash)
+    // rr_index((random() + index)/shard_size)++
+    // host_index = (random() + index % size)
     return hosts_to_use[rr_indexes_[source]++ % hosts_to_use.size()];
   }
 

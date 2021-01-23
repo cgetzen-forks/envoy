@@ -111,6 +111,8 @@ LoadBalancerBase::LoadBalancerBase(
     : stats_(stats), runtime_(runtime), random_(random),
       default_healthy_panic_percent_(PROTOBUF_PERCENT_TO_ROUNDED_INTEGER_OR_DEFAULT(
           common_config, healthy_panic_threshold, 100, 50)),
+      shard_size_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+          common_config.consistent_hashing_lb_config(), shard_size, 1)),
       priority_set_(priority_set) {
   for (auto& host_set : priority_set_.hostSetsPerPriority()) {
     recalculatePerPriorityState(host_set->priority(), priority_set_, per_priority_load_,

@@ -94,7 +94,8 @@ void ThreadAwareLoadBalancerBase::initialize() {
   // I will look into doing this in a follow up. Doing everything using a background thread heavily
   // complicated initialization as the load balancer would need its own initialized callback. I
   // think the synchronous/asynchronous split is probably the best option.
-  priority_set_.addPriorityUpdateCb(
+  if (update_)
+    priority_set_.addPriorityUpdateCb(
       [this](uint32_t, const HostVector&, const HostVector&) -> void { refresh(); });
 
   refresh();
@@ -158,6 +159,14 @@ ThreadAwareLoadBalancerBase::LoadBalancerImpl::chooseHost(LoadBalancerContext* c
     stats_.lb_healthy_panic_.inc();
   }
 
+  if (shard_size_ > 1) {
+    HostConstSharedPtr hosts [5] = { };
+    uint8_t max_hosts = 0;
+    per_priority_state->current_lb_->chooseHosts(h, hosts, &max_hosts);
+    // ENVOY_LOG(info, "thread_aware hosts={}", max_hosts);
+    return (this->*load_balancer_)(hosts, max_hosts);
+  }
+
   HostConstSharedPtr host;
   const uint32_t max_attempts = context ? context->hostSelectionRetryCount() + 1 : 1;
   for (uint32_t i = 0; i < max_attempts; ++i) {
@@ -173,11 +182,12 @@ ThreadAwareLoadBalancerBase::LoadBalancerImpl::chooseHost(LoadBalancerContext* c
 }
 
 LoadBalancerPtr ThreadAwareLoadBalancerBase::LoadBalancerFactoryImpl::create() {
-  auto lb = std::make_unique<LoadBalancerImpl>(stats_, random_);
+  auto lb = std::make_unique<LoadBalancerImpl>(stats_, random_, common_config_);
 
   // We must protect current_lb_ via a RW lock since it is accessed and written to by multiple
   // threads. All complex processing has already been precalculated however.
   absl::ReaderMutexLock lock(&mutex_);
+  // lb->healthy_and_degraded_per_priority_load_ = healthy_and_degraded_per_priority_load_;
   lb->healthy_per_priority_load_ = healthy_per_priority_load_;
   lb->degraded_per_priority_load_ = degraded_per_priority_load_;
   lb->per_priority_state_ = per_priority_state_;

@@ -36,10 +36,11 @@ class MaglevTable : public ThreadAwareLoadBalancerBase::HashingLoadBalancer,
 public:
   MaglevTable(const NormalizedHostWeightVector& normalized_host_weights,
               double max_normalized_weight, uint64_t table_size, bool use_hostname_for_hashing,
-              MaglevLoadBalancerStats& stats);
+              uint32_t shard_size, LoadBalancerType lb_type_, MaglevLoadBalancerStats& stats);
 
   // ThreadAwareLoadBalancerBase::HashingLoadBalancer
   HostConstSharedPtr chooseHost(uint64_t hash, uint32_t attempt) const override;
+  void chooseHosts(uint64_t hash, HostConstSharedPtr * hosts, uint8_t * max_hosts) const override;
 
   // Recommended table size in section 5.3 of the paper.
   static const uint64_t DefaultTableSize = 65537;
@@ -61,6 +62,8 @@ private:
   uint64_t permutation(const TableBuildEntry& entry);
 
   const uint64_t table_size_;
+  const uint64_t shard_size_;
+  const LoadBalancerType lb_type_;
   std::vector<HostConstSharedPtr> table_;
   MaglevLoadBalancerStats& stats_;
 };
@@ -87,7 +90,7 @@ private:
                      double /* min_normalized_weight */, double max_normalized_weight) override {
     HashingLoadBalancerSharedPtr maglev_lb =
         std::make_shared<MaglevTable>(normalized_host_weights, max_normalized_weight, table_size_,
-                                      use_hostname_for_hashing_, stats_);
+                                      use_hostname_for_hashing_, shard_size_, lb_type_, stats_);
 
     if (hash_balance_factor_ == 0) {
       return maglev_lb;
@@ -104,6 +107,8 @@ private:
   const uint64_t table_size_;
   const bool use_hostname_for_hashing_;
   const uint32_t hash_balance_factor_;
+  const uint32_t shard_size_;
+  LoadBalancerType lb_type_;
 };
 
 } // namespace Upstream

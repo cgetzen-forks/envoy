@@ -1,0 +1,26 @@
+*Title*: *Shuffle Sharding to combinatorially isolate clients*
+
+*Description*:
+>Please read the initial post https://groups.google.com/g/envoy-dev/c/d6LyDJyqF58
+
+Hi @mattklein123, thank you for the response! There's a lot to unpack there.
+On the shuffle-shard math: You're right -- using shard_size=total_size/2 yields the worst case scenario. However, choosing more reasonable shard sizes still results in many shards (which is kind of the point, isolation!). I think the following are more reasonable shard sizes:
+30 choose 5 = 142,506 shards
+50 choose 3 = 19,600 shards
+If having ~10^4 - 10^5 shards in memory is reasonable, I will turn off turn off cache eviction and potentially pre-calculate all shards.
+
+How will shards be configured?
+They are currently configured dynamically on chooseHost(..) when the shard doesn't exist in the cache.
+The cache key is a combinatoric index (0 to nCk-1). The hosts each shard adds are also configured with this index. It is _relatively_ expensive to do calculate the "on" elements for a given combinatoric index. Relaxing the requirement of index ordering (e.g. index 0 is all left-most elements) may lead to a better option. Maybe there is an entirely different, more performant, option?
+
+How will shards be chosen?
+Currently, shards are chosen by hashing the envoy.lb metadata and indexing into the cache. I just discovered route.RouteAction.HashPolicy, which may be a better option.
+
+So it seems like a 2 layer approach with a mechanism to create shards, a mechanism to hash to shards, and then a 2nd tier LB in each shard would work out nicely?
+In full agreement.
+
+Some other thoughts that may spark better minds than mine:
+- Currently, when a host goes unhealthy, callbacks are run on all shards. I'm not sure if this is better than calculating which shards include the host and only updating those.
+- When the total number of upstreams increases or decreases, I believe we need to re-calculate all shards.
+
+[Here](https://github.com/envoyproxy/envoy/compare/master...cgetzen-forks:feature-shuffleshard-balancer) is a rough-but-working draft. I will clean it up, add tests, and see if more ideas trickle in.
