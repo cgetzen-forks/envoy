@@ -22,6 +22,7 @@ enum class LoadBalancerType {
   RingHash,
   OriginalDst,
   Maglev,
+  // ShuffleShard,
   ClusterProvided
 };
 

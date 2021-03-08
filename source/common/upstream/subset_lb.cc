@@ -755,6 +755,12 @@ SubsetLoadBalancer::PrioritySubsetImpl::PrioritySubsetImpl(const SubsetLoadBalan
                                                    subset_lb.random_, subset_lb.common_config_);
     break;
 
+  // case LoadBalancerType::ShuffleShard:
+  //   lb_ = std::make_unique<ShuffleShardLoadBalancer>(
+  //       *this, subset_lb.original_local_priority_set_, subset_lb.stats_, subset_lb.runtime_,
+  //       subset_lb.random_, subset_lb.common_config_, subset_lb.shuffle_shard_config_);
+  //   break;
+
   case LoadBalancerType::RingHash:
     // TODO(mattklein123): The ring hash LB is thread aware, but currently the subset LB is not.
     // We should make the subset LB thread aware since the calculations are costly, and then we
@@ -776,7 +782,7 @@ SubsetLoadBalancer::PrioritySubsetImpl::PrioritySubsetImpl(const SubsetLoadBalan
     thread_aware_lb_->initialize();
     lb_ = thread_aware_lb_->factory()->create();
     break;
-
+  // case LoadBalancerType::ShuffleShard:
   case LoadBalancerType::OriginalDst:
   case LoadBalancerType::ClusterProvided:
     // LoadBalancerType::OriginalDst is blocked in the factory. LoadBalancerType::ClusterProvided

@@ -734,6 +734,7 @@ ClusterInfoImpl::ClusterInfoImpl(
       maintenance_mode_runtime_key_(absl::StrCat("upstream.maintenance_mode.", name_)),
       source_address_(getSourceAddress(config, bind_config)),
       lb_least_request_config_(config.least_request_lb_config()),
+      lb_shuffle_shard_config_(config.lb_shuffle_shard_config()),
       lb_ring_hash_config_(config.ring_hash_lb_config()),
       lb_maglev_config_(config.maglev_lb_config()),
       lb_original_dst_config_(config.original_dst_lb_config()),
@@ -771,6 +772,9 @@ ClusterInfoImpl::ClusterInfoImpl(
   case envoy::config::cluster::v3::Cluster::RING_HASH:
     lb_type_ = LoadBalancerType::RingHash;
     break;
+  // case envoy::config::cluster::v3::Cluster::SHUFFLE_SHARD:
+  //   lb_type_ = LoadBalancerType::ShuffleShard;
+  //   break;
   case envoy::config::cluster::v3::Cluster::hidden_envoy_deprecated_ORIGINAL_DST_LB:
     if (config.type() != envoy::config::cluster::v3::Cluster::ORIGINAL_DST) {
       throw EnvoyException(

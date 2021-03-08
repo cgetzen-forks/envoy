@@ -1310,6 +1310,12 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
         cluster->statsScope(), parent.parent_.runtime_, parent.parent_.random_,
         cluster->lbSubsetInfo(), cluster->lbRingHashConfig(), cluster->lbMaglevConfig(),
         cluster->lbLeastRequestConfig(), cluster->lbConfig());
+  // } else if (cluster->lbShuffleShardConfig().has_value()) {
+  } else if (auto config = cluster->lbShuffleShardConfig()) {
+    lb_ = std::make_unique<ShuffleShardLoadBalancer>(
+        cluster->lbType(), priority_set_, parent_.local_priority_set_,
+        cluster->stats(), parent.parent_.runtime_, parent.parent_.random_,
+        cluster->lbConfig(), *config);
   } else {
     switch (cluster->lbType()) {
     case LoadBalancerType::LeastRequest: {
@@ -1333,6 +1339,18 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
                                                      parent.parent_.random_, cluster->lbConfig());
       break;
     }
+    // case LoadBalancerType::ShuffleShard: {
+    //   ASSERT(lb_factory_ == nullptr);
+    //   std::cout << "__.size() = " << priority_set_.hostSetsPerPriority().size() << std::endl;
+    //   for (uint i = 0; i < priority_set_.hostSetsPerPriority().size(); i++) {
+    //     std::cout << "__[].size() = " << priority_set_.hostSetsPerPriority()[i]->hosts().size() << std::endl;
+    //   }
+    //   lb_ = std::make_unique<ShuffleShardLoadBalancer>(priority_set_, parent_.local_priority_set_,
+    //                                                  cluster->stats(), parent.parent_.runtime_,
+    //                                                  parent.parent_.random_, cluster->lbConfig(),
+    //                                                  cluster->lbShuffleShardConfig());
+    //   break;
+    // }
     case LoadBalancerType::ClusterProvided:
     case LoadBalancerType::RingHash:
     case LoadBalancerType::Maglev:
