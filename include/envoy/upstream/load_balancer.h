@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "envoy/config/typed_config.h"
 #include "envoy/common/pure.h"
 #include "envoy/network/transport_socket.h"
 #include "envoy/router/router.h"
@@ -114,7 +115,7 @@ using LoadBalancerPtr = std::unique_ptr<LoadBalancer>;
 /**
  * Factory for load balancers.
  */
-class LoadBalancerFactory {
+class LoadBalancerFactory : public Config::TypedFactory {
 public:
   virtual ~LoadBalancerFactory() = default;
 
@@ -122,6 +123,10 @@ public:
    * @return LoadBalancerPtr a new load balancer.
    */
   virtual LoadBalancerPtr create() PURE;
+
+  ProtobufTypes::MessagePtr createEmptyConfigProto() override {return nullptr;}
+
+  std::string category() const override { return "envoy.load_balancers"; }
 };
 
 using LoadBalancerFactorySharedPtr = std::shared_ptr<LoadBalancerFactory>;

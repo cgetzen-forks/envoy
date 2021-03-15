@@ -15,7 +15,7 @@ EXTENSIONS = {
 
     "envoy.clusters.aggregate":                         "//source/extensions/clusters/aggregate:cluster",
     "envoy.clusters.dynamic_forward_proxy":             "//source/extensions/clusters/dynamic_forward_proxy:cluster",
-    "envoy.clusters.redis":                             "//source/extensions/clusters/redis:redis_cluster",
+    # "envoy.clusters.redis":                             "//source/extensions/clusters/redis:redis_cluster",
 
     #
     # Compression
@@ -108,6 +108,11 @@ EXTENSIONS = {
     "envoy.filters.listener.proxy_protocol":            "//source/extensions/filters/listener/proxy_protocol:config",
     "envoy.filters.listener.tls_inspector":             "//source/extensions/filters/listener/tls_inspector:config",
 
+    #
+    # Load balancers
+    #
+
+    "envoy.load_balancers.shuffle_shard":               "//source/extensions/load_balancers/shuffle_shard:config",
     #
     # Network filters
     #

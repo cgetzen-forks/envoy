@@ -67,11 +67,16 @@ public:
   };
 
 private:
-  struct LoadBalancerFactory : public Upstream::LoadBalancerFactory {
+  class LoadBalancerFactory : public Upstream::LoadBalancerFactory {
+  public:
     LoadBalancerFactory(const std::shared_ptr<OriginalDstCluster>& cluster) : cluster_(cluster) {}
 
     // Upstream::LoadBalancerFactory
     Upstream::LoadBalancerPtr create() override { return std::make_unique<LoadBalancer>(cluster_); }
+
+    std::string name() const override {
+      return "OriginalDstLB";
+    }
 
     const std::shared_ptr<OriginalDstCluster> cluster_;
   };

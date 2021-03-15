@@ -115,6 +115,10 @@ private:
     // Upstream::LoadBalancerFactory
     LoadBalancerPtr create() override;
 
+    std::string name() const override {
+      return "ThreadAwareLoadBalancer-LBFImpl";
+    }
+
     ClusterStats& stats_;
     Random::RandomGenerator& random_;
     absl::Mutex mutex_;
