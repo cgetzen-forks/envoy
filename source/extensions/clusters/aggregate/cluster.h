@@ -136,25 +136,36 @@ private:
 struct AggregateLoadBalancerFactory : public Upstream::LoadBalancerFactory {
   AggregateLoadBalancerFactory(const Cluster& cluster) : cluster_(cluster) {}
   // Upstream::LoadBalancerFactory
-  Upstream::LoadBalancerPtr create() override {
+  Upstream::LoadBalancerSharedPtr create() override {
     return std::make_unique<AggregateClusterLoadBalancer>(
         cluster_.info(), cluster_.cluster_manager_, cluster_.runtime_, cluster_.random_,
         cluster_.clusters_);
   }
+
+  std::string name() const override {
+    return "AggregateLBF";
+  }
+
 
   const Cluster& cluster_;
 };
 
 // Thread aware load balancer created by the main thread.
 struct AggregateThreadAwareLoadBalancer : public Upstream::ThreadAwareLoadBalancer {
+// public:
   AggregateThreadAwareLoadBalancer(const Cluster& cluster)
       : factory_(std::make_shared<AggregateLoadBalancerFactory>(cluster)) {}
+      // : factory_(AggregateLoadBalancerFactory(cluster)) {}
 
   // Upstream::ThreadAwareLoadBalancer
+  // Upstream::LoadBalancerFactorySharedPtr factory() override { return std::make_unique<AggregateLoadBalancerFactory>(factory_); }
   Upstream::LoadBalancerFactorySharedPtr factory() override { return factory_; }
   void initialize() override {}
+// private:
 
   std::shared_ptr<AggregateLoadBalancerFactory> factory_;
+  // Upstream::LoadBalancerFactorySharedPtr factory_;
+  // AggregateLoadBalancerFactory factory_;
 };
 
 class ClusterFactory : public Upstream::ConfigurableClusterFactoryBase<

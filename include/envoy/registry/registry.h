@@ -278,14 +278,18 @@ public:
    * Gets a factory by name. If the name isn't found in the registry, returns nullptr.
    */
   static Base* getFactory(absl::string_view name) {
+    std::cout << "getFactory::start " << name << std::endl;
     auto it = factories().find(name);
     if (it == factories().end()) {
+      std::cout << "getFactory::end (not found)" << std::endl;
       return nullptr;
     }
 
     if (!checkDeprecated(name)) {
+      std::cout << "getFactory::end (dep)" << std::endl;
       return nullptr;
     }
+    std::cout << "getFactory::end (it-second)" << std::endl;
     return it->second;
   }
 

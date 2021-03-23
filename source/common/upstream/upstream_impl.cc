@@ -806,6 +806,9 @@ ClusterInfoImpl::ClusterInfoImpl(
 
     lb_type_ = LoadBalancerType::ClusterProvided;
     break;
+  case envoy::config::cluster::v3::Cluster::LOAD_BALANCING_POLICY_CONFIG:
+    lb_type_ = LoadBalancerType::LoadBalancingPolicyConfig;
+    break;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }

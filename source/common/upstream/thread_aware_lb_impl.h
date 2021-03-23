@@ -113,7 +113,12 @@ private:
         : stats_(stats), random_(random) {}
 
     // Upstream::LoadBalancerFactory
-    LoadBalancerPtr create() override;
+    LoadBalancerSharedPtr create(const ClusterInfoConstSharedPtr& cluster, LoadBalancerFactoryContext& context) override;
+    LoadBalancerSharedPtr create();
+
+    std::string name() const override {
+      return "ThreadAwareLoadBalancer-LBFImpl";
+    }
 
     ClusterStats& stats_;
     Random::RandomGenerator& random_;

@@ -76,6 +76,58 @@ bool hostWeightsAreEqual(const HostVector& hosts) {
 
 } // namespace
 
+
+LoadBalancerSharedPtr LoadBalancerFactoryImplBase::create(
+  const ClusterInfoConstSharedPtr& cluster, const PrioritySet& /*priority_set*/, const PrioritySet* , ClusterStats& ,
+  Runtime::Loader& , Random::RandomGenerator& ) {
+  std::cout << "LoadBalancerFactoryImplBase::create::start" << std::endl;
+  std::string load_balancer_type;
+
+  // if (cluster.has_lb_type()) {
+  //   switch (cluster.lb_type()) {
+  //   case envoy::config::load_balancer::v3::LoadBalancer::SHUFFLE_SHARD:
+  //     cluster_type = Extensions::LoadBalancers::LoadBalancerTypes::get().ShuffleShard;
+  //     break;
+  //   default:
+  //     NOT_REACHED_GCOVR_EXCL_LINE;
+  //   }
+  // } else {
+  //   return nullptr;
+  //   // cluster_type = cluster.cluster_type().name();
+  // }
+
+  // if (cluster.common_lb_config().has_consistent_hashing_lb_config() &&
+  //     cluster.common_lb_config().consistent_hashing_lb_config().use_hostname_for_hashing() &&
+  //     cluster.type() != envoy::config::cluster::v3::Cluster::STRICT_DNS) {
+  //   throw EnvoyException(fmt::format(
+  //       "Cannot use hostname for consistent hashing loadbalancing for cluster of type: '{}'",
+  //       cluster_type));
+  // }
+  std::cout << "LoadBalancerFactoryImplBase::create::1" << std::endl;
+
+  LoadBalancerFactory* factory = Registry::FactoryRegistry<LoadBalancerFactory>::getFactory("envoy.load_balancers.shuffle_shard");
+  std::cout << "LoadBalancerFactoryImplBase::create::2" << std::endl;
+
+  if (factory == nullptr) {
+    throw EnvoyException(fmt::format(
+        "Didn't find a registered cluster factory implementation for name: '{}'", "shuffle_shard"));
+  }
+
+  LoadBalancerFactoryContextImpl context;
+  std::cout << "LoadBalancerFactoryImplBase::create::middle" << std::endl;
+
+  auto x = factory->create(cluster, context);
+  std::cout << "LoadBalancerFactoryImplBase::create::end" << std::endl;
+  return x;
+}
+
+LoadBalancerSharedPtr LoadBalancerFactoryImplBase::create(
+  const ClusterInfoConstSharedPtr& /*cluster*/, LoadBalancerFactoryContext& /*context*/) {
+
+  return nullptr;
+}
+
+
 std::pair<uint32_t, LoadBalancerBase::HostAvailability>
 LoadBalancerBase::choosePriority(uint64_t hash, const HealthyLoad& healthy_per_priority_load,
                                  const DegradedLoad& degraded_per_priority_load) {

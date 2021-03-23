@@ -64,6 +64,8 @@ StaticClusterFactory::createClusterImpl(
     const envoy::config::cluster::v3::Cluster& cluster, ClusterFactoryContext& context,
     Server::Configuration::TransportSocketFactoryContextImpl& socket_factory_context,
     Stats::ScopePtr&& stats_scope) {
+  std::cout << "StaticClusterFactory::createClusterImpl(start)" << std::endl;
+  std::cout << "StaticClusterFactory::createClusterImpl(end)" << std::endl;
   return std::make_pair(
       std::make_shared<StaticClusterImpl>(cluster, context.runtime(), socket_factory_context,
                                           std::move(stats_scope), context.addedViaApi()),

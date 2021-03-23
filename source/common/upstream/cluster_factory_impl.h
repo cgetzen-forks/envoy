@@ -176,14 +176,17 @@ private:
       const envoy::config::cluster::v3::Cluster& cluster, ClusterFactoryContext& context,
       Server::Configuration::TransportSocketFactoryContextImpl& socket_factory_context,
       Stats::ScopePtr&& stats_scope) override {
+    std::cout << "ConfigurableClusterFactoryBase::createClusterImpl(start)" << std::endl;
     ProtobufTypes::MessagePtr config = createEmptyConfigProto();
     Config::Utility::translateOpaqueConfig(
         cluster.cluster_type().typed_config(), ProtobufWkt::Struct::default_instance(),
         socket_factory_context.messageValidationVisitor(), *config);
-    return createClusterWithConfig(cluster,
+    auto ret = createClusterWithConfig(cluster,
                                    MessageUtil::downcastAndValidate<const ConfigProto&>(
                                        *config, context.messageValidationVisitor()),
                                    context, socket_factory_context, std::move(stats_scope));
+   std::cout << "ConfigurableClusterFactoryBase::createClusterImpl(end)" << std::endl;
+   return ret;
   }
 
   virtual std::pair<ClusterImplBaseSharedPtr, ThreadAwareLoadBalancerPtr> createClusterWithConfig(

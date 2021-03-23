@@ -121,7 +121,7 @@ public:
   virtual void onHostHealthUpdate() PURE;
 };
 
-using ClusterSlotUpdateCallBackSharedPtr = std::shared_ptr<ClusterSlotUpdateCallBack>;
+using ClusterSlotUpdateCallBackSharedPtr = std::unique_ptr<ClusterSlotUpdateCallBack>;
 
 /**
  * This factory is created and returned by RedisCluster's factory() method, the create() method will
@@ -137,8 +137,12 @@ public:
 
   void onHostHealthUpdate() override;
 
+  std::string name() const override {
+    return "RedisClusterLoadBalancerFactory";
+  }
+
   // Upstream::LoadBalancerFactory
-  Upstream::LoadBalancerPtr create() override;
+  Upstream::LoadBalancerSharedPtr create(const Upstream::ClusterInfoConstSharedPtr& , Upstream::LoadBalancerFactoryContext& ) override;
 
 private:
   class RedisShard {
@@ -212,7 +216,7 @@ public:
       : factory_(std::move(factory)) {}
 
   // Upstream::ThreadAwareLoadBalancer
-  Upstream::LoadBalancerFactorySharedPtr factory() override { return factory_; }
+  Upstream::LoadBalancerFactorySharedPtr factory() override { return std::move(factory_); }
   void initialize() override{};
 
 private:

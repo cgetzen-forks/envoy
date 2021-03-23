@@ -1,0 +1,11 @@
+message LoadBalancer {
+  option (udpa.annotations.versioning).previous_message_type = "envoy.api.v2.LoadBalancer";
+
+  enum DiscoveryType {
+    SHUFFLE_SHARD = 0;
+  }
+
+  string name = 1 [(validate.rules).string = {min_len: 1}];
+
+  DiscoveryType type = 2 [(validate.rules).enum = {defined_only: true}];
+}

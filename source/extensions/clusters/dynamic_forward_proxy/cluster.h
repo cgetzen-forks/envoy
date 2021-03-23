@@ -27,6 +27,9 @@ public:
           Server::Configuration::TransportSocketFactoryContextImpl& factory_context,
           Stats::ScopePtr&& stats_scope, bool added_via_api);
 
+  // std::string name() const override {
+  //   return "Cluster";
+  // }
   // Upstream::Cluster
   Upstream::Cluster::InitializePhase initializePhase() const override {
     return Upstream::Cluster::InitializePhase::Primary;
@@ -72,16 +75,24 @@ private:
     // Upstream::LoadBalancerFactory
     Upstream::LoadBalancerPtr create() override { return std::make_unique<LoadBalancer>(cluster_); }
 
+    std::string name() const override {
+      return "DynamicFowardProxyLBF";
+    }
+
     Cluster& cluster_;
   };
 
-  struct ThreadAwareLoadBalancer : public Upstream::ThreadAwareLoadBalancer {
+  class ThreadAwareLoadBalancer : public Upstream::ThreadAwareLoadBalancer {
+  public:
     ThreadAwareLoadBalancer(Cluster& cluster) : cluster_(cluster) {}
 
     // Upstream::ThreadAwareLoadBalancer
     Upstream::LoadBalancerFactorySharedPtr factory() override {
-      return std::make_shared<LoadBalancerFactory>(cluster_);
+      return std::make_unique<LoadBalancerFactory>(cluster_);
     }
+    // std::string name() const override {
+    //   return "DynamicFowardProxyLBF";
+    // }
     void initialize() override {}
 
     Cluster& cluster_;

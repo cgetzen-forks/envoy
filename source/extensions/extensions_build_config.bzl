@@ -13,9 +13,9 @@ EXTENSIONS = {
     # Clusters
     #
 
-    "envoy.clusters.aggregate":                         "//source/extensions/clusters/aggregate:cluster",
-    "envoy.clusters.dynamic_forward_proxy":             "//source/extensions/clusters/dynamic_forward_proxy:cluster",
-    "envoy.clusters.redis":                             "//source/extensions/clusters/redis:redis_cluster",
+    # "envoy.clusters.aggregate":                         "//source/extensions/clusters/aggregate:cluster",
+    # "envoy.clusters.dynamic_forward_proxy":             "//source/extensions/clusters/dynamic_forward_proxy:cluster",
+    # "envoy.clusters.redis":                             "//source/extensions/clusters/redis:redis_cluster",
 
     #
     # Compression
@@ -42,7 +42,7 @@ EXTENSIONS = {
     # Health checkers
     #
 
-    "envoy.health_checkers.redis":                      "//source/extensions/health_checkers/redis:config",
+    # "envoy.health_checkers.redis":                      "//source/extensions/health_checkers/redis:config",
 
     #
     # Input Matchers
@@ -109,6 +109,11 @@ EXTENSIONS = {
     "envoy.filters.listener.tls_inspector":             "//source/extensions/filters/listener/tls_inspector:config",
 
     #
+    # Load balancers
+    #
+
+    "envoy.load_balancers.shuffle_shard":               "//source/extensions/load_balancers/shuffle_shard:config",
+    #
     # Network filters
     #
 
@@ -126,7 +131,7 @@ EXTENSIONS = {
     "envoy.filters.network.postgres_proxy":             "//source/extensions/filters/network/postgres_proxy:config",
     "envoy.filters.network.ratelimit":                  "//source/extensions/filters/network/ratelimit:config",
     "envoy.filters.network.rbac":                       "//source/extensions/filters/network/rbac:config",
-    "envoy.filters.network.redis_proxy":                "//source/extensions/filters/network/redis_proxy:config",
+    # "envoy.filters.network.redis_proxy":                "//source/extensions/filters/network/redis_proxy:config",
     "envoy.filters.network.rocketmq_proxy":             "//source/extensions/filters/network/rocketmq_proxy:config",
     "envoy.filters.network.tcp_proxy":                  "//source/extensions/filters/network/tcp_proxy:config",
     "envoy.filters.network.thrift_proxy":               "//source/extensions/filters/network/thrift_proxy:config",

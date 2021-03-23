@@ -23,7 +23,7 @@ RedisCluster::RedisCluster(
     Network::DnsResolverSharedPtr dns_resolver,
     Server::Configuration::TransportSocketFactoryContextImpl& factory_context,
     Stats::ScopePtr&& stats_scope, bool added_via_api,
-    ClusterSlotUpdateCallBackSharedPtr lb_factory)
+    ClusterSlotUpdateCallBack lb_factory)
     : Upstream::BaseDynamicClusterImpl(cluster, runtime, factory_context, std::move(stats_scope),
                                        added_via_api, factory_context.dispatcher().timeSource()),
       cluster_manager_(cluster_manager),
@@ -44,7 +44,7 @@ RedisCluster::RedisCluster(
               ? cluster.load_assignment()
               : Config::Utility::translateClusterHosts(cluster.hidden_envoy_deprecated_hosts())),
       local_info_(factory_context.localInfo()), random_(api.randomGenerator()),
-      redis_discovery_session_(*this, redis_client_factory), lb_factory_(std::move(lb_factory)),
+      redis_discovery_session_(*this, redis_client_factory), lb_factory_(lb_factory),
       auth_username_(
           NetworkFilters::RedisProxy::ProtocolOptionsConfigImpl::authUsername(info(), api)),
       auth_password_(
@@ -111,7 +111,7 @@ void RedisCluster::onClusterSlotUpdate(ClusterSlotsPtr&& slots) {
   const bool host_updated = updateDynamicHostList(new_hosts, hosts_, hosts_added, hosts_removed,
                                                   updated_hosts, all_hosts_, all_new_hosts);
   const bool slot_updated =
-      lb_factory_ ? lb_factory_->onClusterSlotUpdate(std::move(slots), updated_hosts) : false;
+      lb_factory_ ? lb_factory_.onClusterSlotUpdate(std::move(slots), updated_hosts) : false;
 
   // If slot is updated, call updateAllHosts regardless of if there's new hosts to force
   // update of the thread local load balancers.
@@ -135,7 +135,7 @@ void RedisCluster::onClusterSlotUpdate(ClusterSlotsPtr&& slots) {
 
 void RedisCluster::reloadHealthyHostsHelper(const Upstream::HostSharedPtr& host) {
   if (lb_factory_) {
-    lb_factory_->onHostHealthUpdate();
+    lb_factory_.onHostHealthUpdate();
   }
   if (host && (host->health() == Upstream::Host::Health::Degraded ||
                host->health() == Upstream::Host::Health::Unhealthy)) {
@@ -401,8 +401,8 @@ RedisClusterFactory::createClusterWithConfig(
                           nullptr);
   }
   auto lb_factory =
-      std::make_shared<RedisClusterLoadBalancerFactory>(context.api().randomGenerator());
-  return std::make_pair(std::make_shared<RedisCluster>(
+      RedisClusterLoadBalancerFactory(context.api().randomGenerator());
+  return std::make_pair(std::make_unique<RedisCluster>(
                             cluster, proto_config,
                             NetworkFilters::Common::Redis::Client::ClientFactoryImpl::instance_,
                             context.clusterManager(), context.runtime(), context.api(),

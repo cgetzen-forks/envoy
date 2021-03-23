@@ -18,10 +18,49 @@
 #include "common/runtime/runtime_protos.h"
 #include "common/upstream/edf_scheduler.h"
 
+#include "common/config/metadata.h"
+#include "common/config/utility.h"
+
 #include "infima/infima.h"
 
 namespace Envoy {
 namespace Upstream {
+
+
+class LoadBalancerFactoryContextImpl : public LoadBalancerFactoryContext {
+public:
+  LoadBalancerFactoryContextImpl() {}
+};
+
+
+class LoadBalancerFactoryImplBase : public LoadBalancerFactory {
+public:
+  /**
+   * Static method to get the registered cluster factory and create an instance of cluster.
+   */
+  static LoadBalancerSharedPtr
+  create(const ClusterInfoConstSharedPtr& cluster, const PrioritySet& priority_set, const PrioritySet* local_priority_set, ClusterStats& stats,
+  Runtime::Loader& runtime, Random::RandomGenerator& random);
+
+  // Upstream::ClusterFactory
+  LoadBalancerSharedPtr create(const ClusterInfoConstSharedPtr& cluster,
+                          LoadBalancerFactoryContext& context) override;
+  std::string name() const override { return name_; }
+
+protected:
+  LoadBalancerFactoryImplBase(const std::string& name) : name_(name) {}
+
+private:
+  /**
+   * Create an instance of ClusterImplBase.
+   */
+  // virtual ClusterImplBaseSharedPtr
+  // createClusterImpl(const envoy::api::v2::Cluster& cluster, ClusterFactoryContext& context,
+  //                   Server::Configuration::TransportSocketFactoryContext& socket_factory_context,
+  //                   Stats::ScopePtr&& stats_scope) PURE;
+  const std::string name_;
+};
+
 
 // Priority levels and localities are considered overprovisioned with this factor.
 static constexpr uint32_t kDefaultOverProvisioningFactor = 140;

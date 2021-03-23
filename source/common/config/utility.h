@@ -282,11 +282,13 @@ public:
    */
   template <class Factory, class ProtoMessage>
   static Factory* getFactory(const ProtoMessage& message) {
+    std::cout << "getFactory2::start" << std::endl;
     Factory* factory = Utility::getFactoryByType<Factory>(message.typed_config());
     if (factory != nullptr) {
+      std::cout << "getFactory2::end (not null)" << std::endl;
       return factory;
     }
-
+    std::cout << "getFactory2::end (null)" << std::endl;
     return Utility::getFactoryByName<Factory>(message.name());
   }
 

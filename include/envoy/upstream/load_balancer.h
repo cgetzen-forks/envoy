@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "envoy/config/typed_config.h"
 #include "envoy/common/pure.h"
 #include "envoy/network/transport_socket.h"
 #include "envoy/router/router.h"
@@ -11,6 +12,12 @@
 
 namespace Envoy {
 namespace Upstream {
+
+
+class LoadBalancerFactoryContext {
+public:
+  virtual ~LoadBalancerFactoryContext() = default;
+};
 
 /**
  * Context information passed to a load balancer to use when choosing a host. Not all load
@@ -109,19 +116,29 @@ public:
   virtual HostConstSharedPtr peekAnotherHost(LoadBalancerContext* context) PURE;
 };
 
-using LoadBalancerPtr = std::unique_ptr<LoadBalancer>;
+// using LoadBalancerPtr = std::unique_ptr<LoadBalancer>;
 
 /**
  * Factory for load balancers.
  */
-class LoadBalancerFactory {
+
+using LoadBalancerPtr = std::unique_ptr<LoadBalancer>;
+using LoadBalancerSharedPtr = std::unique_ptr<LoadBalancer>;
+
+class LoadBalancerFactory : public Config::TypedFactory {
 public:
   virtual ~LoadBalancerFactory() = default;
 
   /**
    * @return LoadBalancerPtr a new load balancer.
    */
-  virtual LoadBalancerPtr create() PURE;
+
+   // virtual LoadBalancerSharedPtr create(const envoy::config::cluster::v3::Cluster& cluster, LoadBalancerFactoryContext& context) PURE;
+   virtual LoadBalancerSharedPtr create(const ClusterInfoConstSharedPtr& cluster, LoadBalancerFactoryContext& context) PURE;
+
+  ProtobufTypes::MessagePtr createEmptyConfigProto() override {return nullptr;}
+
+  std::string category() const override { return "envoy.load_balancers"; }
 };
 
 using LoadBalancerFactorySharedPtr = std::shared_ptr<LoadBalancerFactory>;
