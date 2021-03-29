@@ -250,6 +250,7 @@ ClusterManagerImpl::ClusterManagerImpl(
     Http::Context& http_context, Grpc::Context& grpc_context, Router::Context& router_context)
     : factory_(factory), runtime_(runtime), stats_(stats), tls_(tls),
       random_(api.randomGenerator()),
+      validation_context_(validation_context),
       bind_config_(bootstrap.cluster_manager().upstream_bind_config()), local_info_(local_info),
       cm_stats_(generateStats(stats)),
       init_helper_(*this, [this](ClusterManagerCluster& cluster) { onClusterInit(cluster); }),
@@ -951,6 +952,7 @@ void ClusterManagerImpl::postThreadLocalClusterUpdate(ClusterManagerCluster& cm_
   tls_.runOnAllThreads(
       [info = cm_cluster.cluster().info(), params = std::move(params), add_or_update_cluster,
        load_balancer_factory](OptRef<ThreadLocalClusterManagerImpl> cluster_manager) {
+        // load_balancer_factory, validation_context](OptRef<ThreadLocalClusterManagerImpl> cluster_manager) {
         ThreadLocalClusterManagerImpl::ClusterEntry* new_cluster = nullptr;
         if (add_or_update_cluster) {
           if (cluster_manager->thread_local_clusters_.count(info->name()) > 0) {
@@ -961,6 +963,7 @@ void ClusterManagerImpl::postThreadLocalClusterUpdate(ClusterManagerCluster& cm_
 
           new_cluster = new ThreadLocalClusterManagerImpl::ClusterEntry(*cluster_manager, info,
                                                                         load_balancer_factory);
+                                                                        // load_balancer_factory, validation_context_);
           cluster_manager->thread_local_clusters_[info->name()].reset(new_cluster);
         }
 
@@ -1300,26 +1303,25 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::getHttpConnPoolsContainer(
 ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
     ThreadLocalClusterManagerImpl& parent, ClusterInfoConstSharedPtr cluster,
     const LoadBalancerFactorySharedPtr& lb_factory)
+    // const ProtobufMessage::ValidationContext& validation_context)
     : parent_(parent), lb_factory_(lb_factory), cluster_info_(cluster),
       http_async_client_(cluster, parent.parent_.stats_, parent.thread_local_dispatcher_,
                          parent.parent_.local_info_, parent.parent_, parent.parent_.runtime_,
                          parent.parent_.random_,
                          Router::ShadowWriterPtr{new Router::ShadowWriterImpl(parent.parent_)},
-                         parent_.parent_.http_context_, parent_.parent_.router_context_) {
+                         parent_.parent_.http_context_, parent_.parent_.router_context_){
+                         // validation_context_(validation_context) {
   priority_set_.getOrCreateHostSet(0);
 
   // TODO(mattklein123): Consider converting other LBs over to thread local. All of them could
   // benefit given the healthy panic, locality, and priority calculations that take place.
+  std::cout << "ClusterManagerImpl::ClusterEntry" << std::endl;
   if (cluster->lbSubsetInfo().isEnabled()) {
     lb_ = std::make_unique<SubsetLoadBalancer>(
         cluster->lbType(), priority_set_, parent_.local_priority_set_, cluster->stats(),
         cluster->statsScope(), parent.parent_.runtime_, parent.parent_.random_,
         cluster->lbSubsetInfo(), cluster->lbRingHashConfig(), cluster->lbMaglevConfig(),
         cluster->lbLeastRequestConfig(), cluster->lbConfig());
-  } else if (auto config = cluster->lbShuffleShardConfig()) {
-    lb_ = std::make_unique<ShuffleShardLoadBalancer>(
-        cluster->lbType(), priority_set_, parent_.local_priority_set_, cluster->stats(),
-        parent.parent_.runtime_, parent.parent_.random_, cluster->lbConfig(), *config);
   } else {
     switch (cluster->lbType()) {
     case LoadBalancerType::LeastRequest: {
@@ -1341,6 +1343,22 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
       lb_ = std::make_unique<RoundRobinLoadBalancer>(priority_set_, parent_.local_priority_set_,
                                                      cluster->stats(), parent.parent_.runtime_,
                                                      parent.parent_.random_, cluster->lbConfig());
+      break;
+    }
+    case LoadBalancerType::LoadBalancingPolicyConfig: {
+      ASSERT(lb_factory_ == nullptr);
+      for (auto policy : cluster->loadBalancingPolicy().policies()) {
+        std::cout << "NAME: " << policy.name() << std::endl;
+
+        LoadBalancerFactoryContextImpl context(parent_.parent_.validation_context_.staticValidationVisitor());
+        std::cout << "Created LoadBalancerFactoryContextImpl" << std::endl;
+        TypedLoadBalancerFactory* factory = Registry::FactoryRegistry<TypedLoadBalancerFactory>::getFactory(policy.name());
+        std::cout << "Created TypedLoadBalancerFactory" << std::endl;
+        lb_ = factory->create(policy, cluster->lbType(), context, priority_set_, parent_.local_priority_set_, cluster->stats(),
+                              parent.parent_.runtime_, parent.parent_.random_, cluster->lbConfig());
+        std::cout << "Created lb_" << std::endl;
+        break;
+      }
       break;
     }
     case LoadBalancerType::ClusterProvided:

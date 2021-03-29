@@ -283,14 +283,19 @@ public:
   static void validate(const MessageType& message,
                        ProtobufMessage::ValidationVisitor& validation_visitor) {
     // Log warnings or throw errors if deprecated fields or unknown fields are in use.
+    std::cout << "validate::start" << std::endl;
     if (!validation_visitor.skipValidation()) {
+      std::cout << "validate::no_skip" << std::endl;
       checkForUnexpectedFields(message, validation_visitor);
     }
+    std::cout << "validate::1" << std::endl;
 
     std::string err;
     if (!Validate(message, &err)) {
+      std::cout << "validate::err" << std::endl;
       ProtoExceptionUtil::throwProtoValidationException(err, API_RECOVER_ORIGINAL(message));
     }
+    std::cout << "validate::end" << std::endl;
   }
 
   template <class MessageType>
@@ -313,8 +318,11 @@ public:
   static const MessageType&
   downcastAndValidate(const Protobuf::Message& config,
                       ProtobufMessage::ValidationVisitor& validation_visitor) {
+std::cout << "downcastAndValidate::start" << std::endl;
     const auto& typed_config = dynamic_cast<MessageType>(config);
+    std::cout << "downcastAndValidate::1" << std::endl;
     validate(typed_config, validation_visitor);
+    std::cout << "downcastAndValidate::end" << std::endl;
     return typed_config;
   }
 

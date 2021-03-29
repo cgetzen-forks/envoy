@@ -896,21 +896,22 @@ ShuffleShardLoadBalancer::ShuffleShardLoadBalancer(
     LoadBalancerType lb_type, const PrioritySet& priority_set,
     const PrioritySet* local_priority_set, ClusterStats& stats, Runtime::Loader& runtime,
     Random::RandomGenerator& random,
-    const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config,
-    const envoy::config::cluster::v3::Cluster::LbShuffleShardConfig& config)
+    const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config)
+    // const envoy::config::cluster::v3::Cluster::LbShuffleShardConfig& config)
     : ZoneAwareLoadBalancerBase(priority_set, local_priority_set, stats, runtime, random,
                                 common_config),
       lb_type_(lb_type),
-      endpoints_per_cell_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, endpoints_per_cell, 2)),
-      use_zone_as_dimension_(config.use_zone_as_dimension()),
-      use_dimensions_(config.dimensions().size()),
+      // endpoints_per_cell_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, endpoints_per_cell, 2)),
+      // use_zone_as_dimension_(config.use_zone_as_dimension()),
+      // use_dimensions_(config.dimensions().size()),
+      endpoints_per_cell_(2), use_zone_as_dimension_(false), use_dimensions_(false),
       shuffle_sharder_(ShuffleSharder<HostConstSharedPtr>(12345)) {
 
   // ENVOY_LOG(debug, "endpoints_per_cell: {}", endpoints_per_cell_);
   // ENVOY_LOG(debug, "use_zone_as_dimension: {}", use_zone_as_dimension_);
 
-  for (auto dimension : config.dimensions())
-    dimensions_.push_back(dimension);
+  // for (auto dimension : config.dimensions())
+  //   dimensions_.push_back(dimension);
   if (use_zone_as_dimension_)
     dimensions_.push_back("_envoy_zone");
   if (!dimensions_.size())
@@ -927,6 +928,7 @@ ShuffleShardLoadBalancer::ShuffleShardLoadBalancer(
 }
 
 HostConstSharedPtr ShuffleShardLoadBalancer::chooseHostOnce(LoadBalancerContext* context) {
+  std::cout << "ShuffleShardLoadBalancer::chooseHostOnce" << std::endl;
   absl::optional<uint64_t> hash;
   if (context) {
     hash = context->computeHashKey();

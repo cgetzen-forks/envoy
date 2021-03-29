@@ -26,6 +26,27 @@ namespace Upstream {
 // Priority levels and localities are considered overprovisioned with this factor.
 static constexpr uint32_t kDefaultOverProvisioningFactor = 140;
 
+class LoadBalancerFactoryContextImpl : public LoadBalancerFactoryContext {
+
+public:
+  // LoadBalancerFactoryContextImpl() {}
+
+  LoadBalancerFactoryContextImpl(ProtobufMessage::ValidationVisitor& validation_visitor)
+      : validation_visitor_(validation_visitor) {}
+
+  ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
+    return validation_visitor_;
+  }
+
+  // void set(ProtobufMessage::ValidationVisitor& validation_visitor) {
+  //   validation_visitor_ = validation_visitor;
+  // }
+
+private:
+  ProtobufMessage::ValidationVisitor& validation_visitor_;
+};
+
+
 /**
  * Base class for all LB implementations.
  */
@@ -594,8 +615,7 @@ public:
   ShuffleShardLoadBalancer(LoadBalancerType lb_type, const PrioritySet& priority_set,
                            const PrioritySet* local_priority_set, ClusterStats& stats,
                            Runtime::Loader& runtime, Random::RandomGenerator& random,
-                           const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config,
-                           const envoy::config::cluster::v3::Cluster::LbShuffleShardConfig& config);
+                           const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config);
 
   HostConstSharedPtr chooseHostOnce(LoadBalancerContext* context) override;
 

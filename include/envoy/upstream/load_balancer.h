@@ -112,6 +112,73 @@ public:
 using LoadBalancerPtr = std::unique_ptr<LoadBalancer>;
 
 /**
+ * Context passed to load balancer factory to access server resources.
+ */
+class LoadBalancerFactoryContext {
+public:
+  virtual ~LoadBalancerFactoryContext() = default;
+
+  /**
+   * @return ProtobufMessage::ValidationVisitor& validation visitor for filter configuration
+   *         messages.
+   */
+  virtual ProtobufMessage::ValidationVisitor& messageValidationVisitor() PURE;
+};
+
+class TypedLoadBalancerFactory : public Config::UntypedFactory {
+public:
+  virtual ~TypedLoadBalancerFactory() = default;
+
+  // virtual LoadBalancerPtr create(LoadBalancerType, const PrioritySet&,
+  //    const PrioritySet*, ClusterStats&,
+  //    Runtime::Loader&, Random::RandomGenerator&, const envoy::config::cluster::v3::Cluster::CommonLbConfig&,
+  //    const envoy::config::cluster::v3::LoadBalancingPolicy&) PURE;
+  virtual LoadBalancerPtr create(
+      const envoy::config::cluster::v3::LoadBalancingPolicy::Policy& policy,
+      LoadBalancerType load_balancer_type, LoadBalancerFactoryContext& context,
+      const PrioritySet& priority_set, const PrioritySet* local_priority_set,
+      ClusterStats& cluster_stats, Runtime::Loader& loader, Random::RandomGenerator& random,
+      const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config) PURE;
+
+    // const envoy::config::cluster::v3::Cluster& cluster
+ std::string category() const override { return "envoy.load_balancers"; }
+};
+
+
+
+
+template <class ConfigProto> class ConfigurableTypedLoadBalancerFactory : public TypedLoadBalancerFactory {
+  virtual ProtobufTypes::MessagePtr createEmptyConfigProto() {
+    return std::make_unique<ConfigProto>();
+  }
+
+  LoadBalancerPtr create(const envoy::config::cluster::v3::LoadBalancingPolicy::Policy& /*policy*/,
+      LoadBalancerType load_balancer_type, LoadBalancerFactoryContext& context,
+      const PrioritySet& priority_set, const PrioritySet* local_priority_set,
+      ClusterStats& cluster_stats, Runtime::Loader& loader, Random::RandomGenerator& random,
+      const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config) override {
+    std::cout << "ConfigurableTypedLoadBalancerFactory::create::start" << std::endl;
+    ProtobufTypes::MessagePtr config = createEmptyConfigProto();
+    // TODO: Get policy.policies()[0].typed_config() into config
+    // Envoy::Config::Utility::translateOpaqueConfig(
+    //     policy.policies()[0].typed_config(), ProtobufWkt::Struct::default_instance(),
+    //     socket_factory_context.messageValidatinVisitor(), *config);
+    std::cout << "ConfigurableTypedLoadBalancerFactory::create::2" << std::endl;
+    auto y = MessageUtil::downcastAndValidate<const ConfigProto&>(*config, context.messageValidationVisitor());
+    std::cout << "ConfigurableTypedLoadBalancerFactory::create::3" << std::endl;
+    auto x = createLoadBalancerWithConfig(load_balancer_type, priority_set, local_priority_set,
+                                  cluster_stats, loader, random, common_config,
+                                  y);
+    std::cout << "ConfigurableTypedLoadBalancerFactory::create::end" << std::endl;
+    return x;
+  }
+
+  virtual LoadBalancerPtr createLoadBalancerWithConfig(LoadBalancerType, const PrioritySet&,
+     const PrioritySet*, ClusterStats&, Runtime::Loader&, Random::RandomGenerator&,
+     const envoy::config::cluster::v3::Cluster::CommonLbConfig&, const ConfigProto&) PURE;
+};
+
+/**
  * Factory for load balancers.
  */
 class LoadBalancerFactory {
