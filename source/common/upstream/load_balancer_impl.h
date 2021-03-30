@@ -6,6 +6,7 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <exception>
 
 #include "envoy/common/callback.h"
 #include "envoy/common/random_generator.h"
@@ -18,8 +19,6 @@
 #include "common/protobuf/utility.h"
 #include "common/runtime/runtime_protos.h"
 #include "common/upstream/edf_scheduler.h"
-
-#include "infima/infima.h"
 
 namespace Envoy {
 namespace Upstream {
@@ -43,14 +42,11 @@ template <class ConfigProto> class ConfigurableTypedLoadBalancerFactory : public
     Envoy::Config::Utility::translateOpaqueConfig(
         policy.typed_config(), ProtobufWkt::Struct::default_instance(),
         context.messageValidationVisitor(), *config);
-    std::cout << "ConfigurableTypedLoadBalancerFactory::create::2" << std::endl;
-    auto y = MessageUtil::downcastAndValidate<const ConfigProto&>(*config, context.messageValidationVisitor());
-    std::cout << "ConfigurableTypedLoadBalancerFactory::create::3" << std::endl;
-    auto x = createLoadBalancerWithConfig(load_balancer_type, priority_set, local_priority_set,
-                                  cluster_stats, loader, random, common_config,
-                                  y);
-    std::cout << "ConfigurableTypedLoadBalancerFactory::create::end" << std::endl;
-    return x;
+
+    return createLoadBalancerWithConfig(load_balancer_type, priority_set, local_priority_set,
+                                cluster_stats, loader, random, common_config,
+                                MessageUtil::downcastAndValidate<const ConfigProto&>(*config, context.messageValidationVisitor()));
+
   }
 
   virtual LoadBalancerPtr createLoadBalancerWithConfig(LoadBalancerType, const PrioritySet&,
@@ -61,18 +57,12 @@ template <class ConfigProto> class ConfigurableTypedLoadBalancerFactory : public
 class LoadBalancerFactoryContextImpl : public LoadBalancerFactoryContext {
 
 public:
-  // LoadBalancerFactoryContextImpl() {}
-
   LoadBalancerFactoryContextImpl(ProtobufMessage::ValidationVisitor& validation_visitor)
       : validation_visitor_(validation_visitor) {}
 
   ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
     return validation_visitor_;
   }
-
-  // void set(ProtobufMessage::ValidationVisitor& validation_visitor) {
-  //   validation_visitor_ = validation_visitor;
-  // }
 
 private:
   ProtobufMessage::ValidationVisitor& validation_visitor_;
@@ -640,34 +630,6 @@ public:
 
 protected:
   HostConstSharedPtr peekOrChoose(LoadBalancerContext* context, bool peek);
-};
-
-class ShuffleShardLoadBalancer : public ZoneAwareLoadBalancerBase {
-public:
-  ShuffleShardLoadBalancer(LoadBalancerType lb_type, const PrioritySet& priority_set,
-                           const PrioritySet* local_priority_set, ClusterStats& stats,
-                           Runtime::Loader& runtime, Random::RandomGenerator& random,
-                           const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config);
-
-  HostConstSharedPtr chooseHostOnce(LoadBalancerContext* context) override;
-
-  HostConstSharedPtr peekAnotherHost(LoadBalancerContext*) override { return nullptr; }
-
-private:
-  void remove_hosts(const HostVector&);
-
-  void add_hosts(const HostVector&);
-
-  absl::optional<std::vector<std::string>> get_coord(const HostConstSharedPtr&);
-
-  const LoadBalancerType lb_type_;
-  const uint32_t endpoints_per_cell_;
-  const bool use_zone_as_dimension_;
-  std::vector<std::string> dimensions_;
-  const bool use_dimensions_;
-  Lattice<Upstream::HostConstSharedPtr>* lattice_;
-  ShuffleSharder<Upstream::HostConstSharedPtr> shuffle_sharder_;
-  Common::CallbackHandlePtr priority_update_cb_;
 };
 
 /**

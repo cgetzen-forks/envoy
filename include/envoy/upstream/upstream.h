@@ -816,12 +816,6 @@ public:
   lbLeastRequestConfig() const PURE;
 
   /**
-   * @return configuration for shuffle shard load balancing.
-   */
-  // virtual const absl::optional<envoy::config::cluster::v3::Cluster::LbShuffleShardConfig>&
-  // lbShuffleShardConfig() const PURE;
-
-  /**
    * @return configuration for ring hash load balancing, only used if type is set to ring_hash_lb.
    */
   virtual const absl::optional<envoy::config::cluster::v3::Cluster::RingHashLbConfig>&

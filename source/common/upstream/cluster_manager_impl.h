@@ -390,7 +390,6 @@ private:
     struct ClusterEntry : public ThreadLocalCluster {
       ClusterEntry(ThreadLocalClusterManagerImpl& parent, ClusterInfoConstSharedPtr cluster,
                    const LoadBalancerFactorySharedPtr& lb_factory);
-                   // const LoadBalancerFactorySharedPtr& lb_factory, ProtobufMessage::ValidationContext& validation_context);
       ~ClusterEntry() override;
 
       Http::ConnectionPool::Instance* connPool(ResourcePriority priority,
@@ -422,7 +421,6 @@ private:
       LoadBalancerPtr lb_;
       ClusterInfoConstSharedPtr cluster_info_;
       Http::AsyncClientImpl http_async_client_;
-      // ProtobufMessage::ValidationContext& validation_context_;
     };
 
     using ClusterEntryPtr = std::unique_ptr<ClusterEntry>;
@@ -611,6 +609,7 @@ private:
   ClusterCircuitBreakersStatNames cluster_circuit_breakers_stat_names_;
   ClusterRequestResponseSizeStatNames cluster_request_response_size_stat_names_;
   ClusterTimeoutBudgetStatNames cluster_timeout_budget_stat_names_;
+
   Config::SubscriptionFactoryImpl subscription_factory_;
   ClusterSet primary_clusters_;
 };
