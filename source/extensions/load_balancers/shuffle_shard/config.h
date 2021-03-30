@@ -5,8 +5,8 @@
 #include "envoy/extensions/load_balancers/shuffle_shard/v3/shuffle_shard.pb.h"
 #include "envoy/extensions/load_balancers/shuffle_shard/v3/shuffle_shard.pb.validate.h"
 
+#include "common/upstream/load_balancer_impl.h"
 
-#include "envoy/upstream/load_balancer.h"
 #include "envoy/config/typed_config.h"
 
 #include "envoy/registry/registry.h"
