@@ -8,17 +8,18 @@ namespace LoadBalancer {
 namespace ShuffleShard {
 
 ShuffleShardLoadBalancer::ShuffleShardLoadBalancer(
-    Upstream::LoadBalancerType lb_type, const Upstream::PrioritySet& priority_set,
+    Upstream::LoadBalancerType , const Upstream::PrioritySet& priority_set,
     const Upstream::PrioritySet* local_priority_set, Upstream::ClusterStats& stats, Runtime::Loader& runtime,
     Random::RandomGenerator& random,
     const envoy::config::cluster::v3::Cluster::CommonLbConfig& common_config,
     const envoy::extensions::load_balancers::shuffle_shard::v3::ShuffleShardConfig& config)
     : ZoneAwareLoadBalancerBase(priority_set, local_priority_set, stats, runtime, random,
                                 common_config),
-      lb_type_(lb_type),
+      // lb_type_(lb_type),
       endpoints_per_cell_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, endpoints_per_cell, 2)),
       use_zone_as_dimension_(config.use_zone_as_dimension()),
       use_dimensions_(config.dimensions().size()),
+      least_request_choice_count_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, least_request_choice_count, 1)),
       shuffle_sharder_(ShuffleSharder<Upstream::HostConstSharedPtr>(12345)) {
 
   // ENVOY_LOG(debug, "endpoints_per_cell: {}", endpoints_per_cell_);
@@ -54,7 +55,7 @@ Upstream::HostConstSharedPtr ShuffleShardLoadBalancer::chooseHostOnce(Upstream::
       shuffle_sharder_.shuffleShard(*lattice_, seed, endpoints_per_cell_)->get_endpoints();
 
   // Random
-  if (lb_type_ == Upstream::LoadBalancerType::Random)
+  if (least_request_choice_count_ <= 2)
     return endpoints[random_.random() % endpoints.size()];
 
   // Least Request

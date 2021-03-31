@@ -31,11 +31,12 @@ private:
 
   absl::optional<std::vector<std::string>> get_coord(const Upstream::HostConstSharedPtr&);
 
-  const Upstream::LoadBalancerType lb_type_;
+  // const Upstream::LoadBalancerType lb_type_;
   const uint32_t endpoints_per_cell_;
   const bool use_zone_as_dimension_;
   std::vector<std::string> dimensions_;
   const bool use_dimensions_;
+  const uint32_t least_request_choice_count_;
   Lattice<Upstream::HostConstSharedPtr>* lattice_;
   ShuffleSharder<Upstream::HostConstSharedPtr> shuffle_sharder_;
   ::Envoy::Common::CallbackHandlePtr priority_update_cb_;

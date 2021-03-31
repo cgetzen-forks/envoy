@@ -16,4 +16,5 @@ message ShuffleShardConfig {
   google.protobuf.UInt32Value endpoints_per_cell = 1;
   bool use_zone_as_dimension = 2;
   repeated string dimensions = 3;
+  google.protobuf.UInt32Value least_request_choice_count = 4;
 }

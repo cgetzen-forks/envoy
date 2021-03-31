@@ -1345,9 +1345,18 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
       for (auto policy : cluster->loadBalancingPolicy().policies()) {
         LoadBalancerFactoryContextImpl context(parent_.parent_.validation_context_.staticValidationVisitor());
         TypedLoadBalancerFactory* factory = Registry::FactoryRegistry<TypedLoadBalancerFactory>::getFactory(policy.name());
+
+        if (factory == nullptr) {
+          ENVOY_LOG(warn, fmt::format("Didn't find a registered implementation for name: '{}'", policy.name()));
+          continue;
+        }
+
         lb_ = factory->create(policy, cluster->lbType(), context, priority_set_, parent_.local_priority_set_, cluster->stats(),
                               parent.parent_.runtime_, parent.parent_.random_, cluster->lbConfig());
         break;
+      }
+      if (lb_ == nullptr) { // This doesn't seem to work yet.
+        ExceptionUtil::throwEnvoyException("Didn't find any registered implementation.");
       }
       break;
     }
