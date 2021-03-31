@@ -187,7 +187,6 @@ envoy_cc_library(
         "//include/envoy/upstream:load_balancer_interface",
         "//include/envoy/upstream:upstream_interface",
         "//source/common/common:assert_lib",
-        "//source/common/common:utility_lib",
         "//source/common/config:utility_lib",
         "//source/common/config:well_known_names",
         "//source/common/protobuf:utility_lib",
