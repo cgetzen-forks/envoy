@@ -25,10 +25,7 @@ public:
   std::string name() const override;
   Upstream::LoadBalancerPtr createLoadBalancerWithConfig(Upstream::LoadBalancerType, const Upstream::PrioritySet&, const Upstream::PrioritySet*, Upstream::ClusterStats&,
        Runtime::Loader&, Random::RandomGenerator&, const envoy::config::cluster::v3::Cluster::CommonLbConfig&,
-       // const envoy::config::cluster::v3::LoadBalancingPolicy::Policy&,
        const envoy::extensions::load_balancers::shuffle_shard::v3::ShuffleShardConfig&) override;
-
-  // ProtobufTypes::MessagePtr createEmptyConfigProto();// override;
 };
 
 DECLARE_FACTORY(LoadBalancerFactory);
